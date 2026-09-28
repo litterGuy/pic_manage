@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block eyebrow %}<p class="eyebrow">QUARANTINE · DUPLICATES</p>{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <p>
+    这些文件与媒体库中已归档的文件内容相同，被移动到隔离区而不是删除。
+    位置：<code>{{ quarantine_dir }}</code>
+  </p>
+  {% if sources %}
+  <form class="inline-form" method="get">
+    <label>来源
+      <select name="source" data-autosubmit>
+        <option value="">全部</option>
+        {% for s in sources %}
+        <option value="{{ s }}" {{ 'selected' if source == s }}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+  {% endif %}
+</div>
+
+{% if files %}
+<p class="summary">共 <strong>{{ files|length }}</strong> 个重复文件</p>
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>文件</th><th>大小</th><th>类型</th><th>时间</th><th>判定</th><th>原路径</th></tr>
+    </thead>
+    <tbody>
+      {% for f in files %}
+      <tr>
+        <td class="num">{{ f.id }}</td>
+        <td class="cell-name" title="{{ name_of(f.dest_path) }}">{{ name_of(f.dest_path) }}</td>
+        <td class="num">{{ size(f.size) }}</td>
+        <td>{{ glyph(f.media_type) }} {{ media_label(f.media_type) }}</td>
+        <td>
+          {% if f.taken_at %}<span class="mono">{{ f.taken_at }}</span><span class="tag tag-soft">{{ source_label(f.time_source) }}</span>
+          {% else %}<span class="tag tag-warn">无内嵌时间</span>{% endif %}
+        </td>
+        <td>
+          {% if f.dup_kind == 'phash' %}<span class="tag">近似重复</span>
+          {% else %}<span class="tag">完全重复</span>{% endif %}
+        </td>
+        <td class="path">{{ f.source_path }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  {{ icon('duplicate') }}
+  <p>隔离区是空的，没有发现重复文件。</p>
+</div>
+{% endif %}
+
+<div class="note">
+  <h3>{{ icon('undo') }}恢复或删除</h3>
+  <p>在命令行中操作（<code>id</code> 即上表第一列）：</p>
+  <pre>uv run python run.py quarantine restore 12 13      # 移回原位置
+uv run python run.py quarantine purge 12 --yes        # 永久删除</pre>
+</div>
+{% endblock %}

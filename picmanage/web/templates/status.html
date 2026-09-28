@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block eyebrow %}<p class="eyebrow">SYSTEM · OVERVIEW</p>{% endblock %}
+
+{% block content %}
+<div class="cards">
+  <div class="card">
+    <span class="card-num">{{ stats.organized }}</span>
+    <span class="card-label">已归档</span>
+    <span class="card-sub">{{ size(stats.bytes) }}</span>
+  </div>
+  <div class="card">
+    <span class="card-num">{{ stats.unsorted }}</span>
+    <span class="card-label">未分类</span>
+    <a class="card-link" href="{{ url_for('unsorted_page') }}">去处理 →</a>
+  </div>
+  <div class="card">
+    <span class="card-num">{{ stats.quarantined }}</span>
+    <span class="card-label">重复文件</span>
+    <a class="card-link" href="{{ url_for('quarantine_page') }}">去查看 →</a>
+  </div>
+  <div class="card {{ 'card-warn' if stats.error }}">
+    <span class="card-num">{{ stats.error }}</span>
+    <span class="card-label">错误</span>
+    <span class="card-sub">{{ '需要重试' if stats.error else '无' }}</span>
+  </div>
+</div>
+
+<section>
+  <h2>媒体构成</h2>
+  {% set total = stats.organized or 1 %}
+  <div class="bar" role="img" aria-label="图片 {{ stats.by_type.get('image', 0) }}，视频 {{ stats.by_type.get('video', 0) }}，音频 {{ stats.by_type.get('audio', 0) }}">
+    <span class="b-img" style="width: {{ (stats.by_type.get('image', 0) * 100 / total) | round(2) }}%"></span>
+    <span class="b-vid" style="width: {{ (stats.by_type.get('video', 0) * 100 / total) | round(2) }}%"></span>
+    <span class="b-aud" style="width: {{ (stats.by_type.get('audio', 0) * 100 / total) | round(2) }}%"></span>
+  </div>
+  <p class="bar-legend">
+    {% for t in media_types %}
+    <i><span class="swatch sw-{{ 'img' if t == 'image' else ('vid' if t == 'video' else 'aud') }}"></span>
+      {{ media_label(t) }} {{ stats.by_type.get(t, 0) }}</i>
+    {% endfor %}
+  </p>
+</section>
+
+<div class="two-col">
+  <section>
+    <h2>时间来源</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <tbody>
+          {% for src, n in stats.by_source.items() %}
+          <tr>
+            <td>{{ source_label(src) }}</td>
+            <td class="num">{{ n }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="2" class="muted">暂无数据</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>覆盖月份</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <tbody>
+          {% for y, m in stats.months[:12] %}
+          <tr>
+            <td class="mono">{{ y }}-{{ '%02d' | format(m) }}</td>
+            <td class="num"><a href="{{ url_for('month_gallery', year=y, month=m) }}">查看 →</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="2" class="muted">暂无数据</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+{% if runs %}
+<section>
+  <h2>最近的扫描</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>#</th><th>时间</th><th>状态</th><th>归档</th><th>未分类</th><th>隔离</th><th>错误</th><th>用时</th></tr>
+      </thead>
+      <tbody>
+        {% for r in runs %}
+        <tr>
+          <td class="num">{{ r.id }}</td>
+          <td class="mono">{{ r.started_at }}</td>
+          <td>
+            {% if r.interrupted %}<span class="tag tag-warn">{{ icon('alert') }}中断</span>
+            {% elif r.mode == 'dry-run' %}<span class="tag tag-soft">预演</span>
+            {% else %}<span class="tag tag-ok">{{ icon('check') }}完成</span>{% endif %}
+          </td>
+          <td class="num">{{ r.organized }}</td>
+          <td class="num">{{ r.unsorted }}</td>
+          <td class="num">{{ r.quarantined }}</td>
+          <td class="num">{{ r.errors }}</td>
+          <td class="num">{{ '%.1f'|format(r.duration_s or 0) }}s</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<section class="paths">
+  <h2>路径</h2>
+  <dl>
+    <dt>数据目录</dt><dd class="path">{{ data_dir }}</dd>
+  </dl>
+</section>
+{% endblock %}

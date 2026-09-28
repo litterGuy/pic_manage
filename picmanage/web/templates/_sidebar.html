@@ -1,0 +1,77 @@
+<nav class="sidebar" id="sidebar" aria-label="媒体库目录">
+  <div class="brand">
+    <span class="brand-mark">{{ icon('layers') }}</span>
+    <span class="brand-text">
+      <span class="brand-name">媒体库</span>
+      <span class="brand-sub">pic_manage</span>
+    </span>
+  </div>
+
+  <div class="nav-group">
+    <a class="nav-link {{ 'is-active' if active.kind == 'all' }}"
+       href="{{ url_for('all_files') }}">
+      <span class="nav-link-label">{{ icon('grid') }}全部文件</span>
+    </a>
+    <a class="nav-link {{ 'is-active' if active.kind == 'status' }}"
+       href="{{ url_for('status_page') }}">
+      <span class="nav-link-label">{{ icon('info') }}状态总览</span>
+    </a>
+  </div>
+
+  <div class="nav-scroll">
+    {% for year in tree|sort(reverse=true) %}
+    <details class="year" {{ 'open' if loop.first or active.year == year }}>
+      <summary>
+        <span class="year-label">{{ year }}</span>
+        <span class="year-count">
+          {% set yt = namespace(n=0) %}
+          {% for month, types in tree[year].items() %}
+            {% set yt.n = yt.n + types.values() | sum %}
+          {% endfor %}
+          {{ yt.n }}
+        </span>
+      </summary>
+      <ul class="months">
+        {% for month in tree[year]|sort(reverse=true) %}
+        <li>
+          <a class="month-link {{ 'is-active' if active.kind == 'month' and active.year == year and active.month == month }}"
+             href="{{ url_for('month_gallery', year=year, month=month) }}">
+            <span class="month-label">{{ '%02d' | format(month) }}</span>
+            <span class="month-badges">
+              {% for t in media_types %}
+                {% if t in tree[year][month] %}
+                <span class="badge badge-{{ t }}" title="{{ media_label(t) }} {{ tree[year][month][t] }} 个">
+                  {{ glyph(t) }}<i>{{ tree[year][month][t] }}</i>
+                </span>
+                {% endif %}
+              {% endfor %}
+            </span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% else %}
+    <p class="empty">还没有归档任何文件。</p>
+    {% endfor %}
+  </div>
+
+  <div class="nav-group nav-footer">
+    <a class="nav-link {{ 'is-active' if active.kind == 'unsorted' }}"
+       href="{{ url_for('unsorted_page') }}">
+      <span class="nav-link-label">{{ icon('folder') }}未分类</span>
+      <span class="count">{{ extras.get('unsorted', 0) }}</span>
+    </a>
+    <a class="nav-link {{ 'is-active' if active.kind == 'quarantine' }}"
+       href="{{ url_for('quarantine_page') }}">
+      <span class="nav-link-label">{{ icon('duplicate') }}重复文件</span>
+      <span class="count">{{ extras.get('quarantined', 0) }}</span>
+    </a>
+    {% if extras.get('errors', 0) %}
+    <a class="nav-link" href="{{ url_for('status_page') }}">
+      <span class="nav-link-label">{{ icon('alert') }}错误</span>
+      <span class="count count-warn">{{ extras.get('errors', 0) }}</span>
+    </a>
+    {% endif %}
+  </div>
+</nav>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}{{ title }}{% endblock %} · 媒体库</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  {# A favicon cannot inherit currentColor from the page, so the stroke colour is
+     baked in at a value that reads on both a light and a dark browser chrome.
+     urlencode turns the # into %23 for us. #}
+  {% set favicon -%}
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#0891b2' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='m12 3.2 8.6 4.8L12 12.8 3.4 8z'/><path d='m3.4 12.6 8.6 4.8 8.6-4.8'/></svg>
+  {%- endset %}
+  <link rel="icon" href="data:image/svg+xml,{{ favicon | urlencode }}">
+</head>
+<body>
+<div class="edge" aria-hidden="true"></div>
+<a class="skip-link" href="#main">跳到主要内容</a>
+<div class="layout">
+  {% include "_sidebar.html" %}
+  <div class="content" id="main">
+    <header class="topbar">
+      <button class="btn sidebar-toggle" type="button" aria-expanded="false"
+              aria-controls="sidebar">{{ icon('menu') }}<span>目录</span></button>
+      <div class="title-block">
+        {% block eyebrow %}<p class="eyebrow">PIC_MANAGE / LIBRARY</p>{% endblock %}
+        <h1 class="page-title">{{ title }}</h1>
+      </div>
+      <form class="search" action="{{ url_for('all_files') }}" method="get" role="search">
+        <span class="search-field">
+          {{ icon('search') }}
+          <input type="search" name="q" value="{{ request.args.get('q','') }}"
+                 placeholder="搜索文件名…" aria-label="搜索文件名">
+        </span>
+        <button type="submit">搜索</button>
+      </form>
+    </header>
+
+    {% block filters %}{% endblock %}
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      <a href="{{ url_for('status_page') }}">状态总览</a>
+      <span class="dot">·</span>
+      <span>PIC_MANAGE</span>
+    </footer>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

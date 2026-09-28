@@ -1,0 +1,38 @@
+# Runtime state and local mount inputs.
+/data/
+/photos/
+*.db
+*.db-*
+
+# Local configuration and secrets.
+/.env
+/.env.*
+!/.env.example
+/.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+/.uv-cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+/build/
+/dist/
+/pytest-of-*/
+*.part
+*.tmp
+*.log
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

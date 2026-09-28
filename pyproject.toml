@@ -1,0 +1,45 @@
+[project]
+name = "pic-manage"
+version = "1.0.0"
+description = "扫描散乱的图片、视频、音频，按文件内部真实创建时间去重并归档到 年/月 目录，并提供网页浏览。"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "Pillow>=10.0",
+    "pillow-heif>=0.13",
+    "mutagen>=1.47",
+    "Flask>=3.0",
+]
+
+[project.scripts]
+# NOTE: the wrapper calls sys.exit(), so main()'s int return value becomes the
+# process exit status.  The console script must go through console_main() so the
+# Windows code page is fixed up before any Chinese output is printed.
+pic-manage = "picmanage.cli:console_main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "picmanage",
+    "picmanage.scanner",
+    "picmanage.web",
+]
+
+[tool.setuptools.package-data]
+# The web layer resolves templates/ and static/ relative to __file__, so they
+# have to travel with the wheel or `pic-manage serve` breaks once installed.
+# The key must stay quoted: unquoted, TOML reads `picmanage.web` as the nested
+# tables picmanage -> web and setuptools rejects it.
+"picmanage.web" = [
+    "templates/*.html",
+    "static/*",
+    "static/**/*",
+]
+
+# ffmpeg / ffprobe are NOT pip packages -- they must be on PATH for video
+# metadata extraction and video thumbnails.  Without them images and audio
+# still work; only video times and video thumbnails are lost.

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block eyebrow %}<p class="eyebrow">PENDING · NO EMBEDDED TIME</p>{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <p>
+    这些文件里没有找到创建时间（既没有 EXIF，也没有容器元数据）。
+    为了避免把「复制到目录的时间」误当成拍摄时间，它们没有被归档。
+    位置：<code>{{ unsorted_dir }}</code>
+  </p>
+  <p class="muted">
+    如果希望扫描时退回使用文件修改时间，可以加
+    <code>--mtime-fallback</code> 重新扫描（界面上会标注时间来源）。
+  </p>
+</div>
+
+{% if files %}
+<div class="filters">
+  <div class="chips">
+    <a class="chip {{ 'is-on' if not media_type }}" href="{{ url_for('unsorted_page') }}">全部</a>
+    {% for t in media_types %}
+    <a class="chip {{ 'is-on' if media_type == t }}"
+       href="{{ url_for('unsorted_page', type=t) }}">{{ glyph(t) }} {{ media_label(t) }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+<p class="summary">共 <strong>{{ files|length }}</strong> 个文件</p>
+
+<ul class="unsorted-list">
+  {% for f in files %}
+  <li class="unsorted-item">
+    <div class="unsorted-thumb">
+      {% if f.is_image or f.is_video %}
+        <img src="{{ url_for('thumb', file_id=f.id) }}" alt="{{ f.filename }}" loading="lazy">
+      {% else %}
+        {{ glyph(f.media_type) }}
+      {% endif %}
+    </div>
+    <div class="unsorted-body">
+      <p class="unsorted-name" title="{{ f.filename }}">{{ f.filename }}</p>
+      <p class="unsorted-sub">
+        {{ media_label(f.media_type) }} · {{ size(f.size) }}
+        {% if f.resolution %} · {{ f.resolution }}{% endif %}
+        {% if f.duration_ms %} · {{ dur(f.duration_ms) }}{% endif %}
+      </p>
+      <p class="path">{{ f.source_path }}</p>
+    </div>
+    <form class="assign" method="post"
+          action="{{ url_for('unsorted_assign', file_id=f.id) }}">
+      <label>年 <input type="number" name="year" min="1900" max="2100" required
+                       placeholder="2019"></label>
+      <label>月 <input type="number" name="month" min="1" max="12" required
+                       placeholder="03"></label>
+      <button type="submit">归档</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty-state">
+  {{ icon('check') }}
+  <p>没有未分类文件，所有文件都找到了内嵌时间。</p>
+</div>
+{% endif %}
+{% endblock %}

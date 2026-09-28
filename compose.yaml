@@ -1,0 +1,16 @@
+services:
+  picmanage:
+    build: .
+    ports:
+      - "127.0.0.1:${PICMANAGE_PORT:-8000}:8000"
+    environment:
+      PICMANAGE_HOME: /data
+      TZ: ${PICMANAGE_TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ${PICMANAGE_DATA_DIR:-./data}
+        target: /data
+      - type: bind
+        source: ${PICMANAGE_SOURCE_DIR:-./photos}
+        target: /source
+    restart: unless-stopped

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block eyebrow %}<p class="eyebrow">INDEX · ALL FILES{% if year %} · {{ year }}{% endif %}</p>{% endblock %}
+
+{% block filters %}
+<div class="filters">
+  <div class="chips" role="group" aria-label="按类型筛选">
+    <a class="chip {{ 'is-on' if not media_type }}"
+       href="{{ url_for('all_files', q=query, year=year, sort=sort, order=order) }}">全部</a>
+    {% for t in media_types %}
+    <a class="chip {{ 'is-on' if media_type == t }}"
+       href="{{ url_for('all_files', q=query, year=year, type=t, sort=sort, order=order) }}">
+      {{ glyph(t) }} {{ media_label(t) }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <form class="sortbox" method="get">
+    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+    {% if media_type %}<input type="hidden" name="type" value="{{ media_type }}">{% endif %}
+    <label>年份
+      <select name="year" data-autosubmit>
+        <option value="">全部</option>
+        {% for y in years %}
+        <option value="{{ y.y }}" {{ 'selected' if year == y.y }}>{{ y.y }}（{{ y.n }}）</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>{{ icon('sort') }}排序
+      <select name="sort" data-autosubmit>
+        <option value="taken" {{ 'selected' if sort == 'taken' }}>拍摄时间</option>
+        <option value="name" {{ 'selected' if sort == 'name' }}>文件名</option>
+        <option value="size" {{ 'selected' if sort == 'size' }}>文件大小</option>
+      </select>
+    </label>
+    <label>方向
+      <select name="order" data-autosubmit>
+        <option value="asc" {{ 'selected' if order == 'asc' }}>升序</option>
+        <option value="desc" {{ 'selected' if order == 'desc' }}>降序</option>
+      </select>
+    </label>
+  </form>
+</div>
+
+<p class="summary">
+  {% if query %}QUERY "{{ query }}" · {% endif %}共 <strong>{{ total }}</strong> 个文件
+  {% if pages > 1 %} · 第 {{ page }} / {{ pages }} 页{% endif %}
+</p>
+{% endblock %}
+
+{% block content %}
+{% if files %}
+<section class="grid" aria-label="文件列表">
+  {% for f in files %}
+  <a class="tile tile-{{ f.media_type }}" href="{{ url_for('viewer', file_id=f.id, source='all', q=query, year=year, type=media_type, sort=sort, order=order, page=page) }}">
+    <div class="thumb">
+      <span class="kind kind-{{ f.media_type }}" title="{{ media_label(f.media_type) }}">{{ glyph(f.media_type) }}</span>
+      {% if f.is_image %}
+        <img src="{{ url_for('thumb', file_id=f.id) }}" alt="{{ f.filename }}"
+             loading="lazy" decoding="async">
+      {% elif f.is_video %}
+        <img src="{{ url_for('thumb', file_id=f.id) }}" alt="{{ f.filename }}"
+             loading="lazy" decoding="async">
+        <span class="play">{{ icon('play') }}</span>
+        {% if f.duration_ms %}<span class="dur">{{ dur(f.duration_ms) }}</span>{% endif %}
+      {% else %}
+        <div class="placeholder placeholder-audio">
+          <span class="ph-icon">{{ glyph(f.media_type) }}</span>
+          {% if f.duration_ms %}<span class="dur">{{ dur(f.duration_ms) }}</span>{% endif %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="tile-meta">
+      <span class="tile-name" title="{{ f.filename }}">{{ f.filename }}</span>
+      <span class="tile-sub">
+        {{ f.date }}{% if f.clock %} {{ f.clock }}{% endif %}
+        {% if f.resolution %} · {{ f.resolution }}{% endif %}
+      </span>
+    </div>
+  </a>
+  {% endfor %}
+</section>
+
+{% if pages > 1 %}
+<nav class="pager" aria-label="分页">
+  {% if page > 1 %}
+  <a href="{{ url_for('all_files', q=query, type=media_type, year=year, sort=sort, order=order, page=page-1) }}">
+    {{ icon('chevron-left') }} 上一页
+  </a>
+  {% endif %}
+  <span class="pager-info">{{ page }} / {{ pages }}</span>
+  {% if has_more %}
+  <a href="{{ url_for('all_files', q=query, type=media_type, year=year, sort=sort, order=order, page=page+1) }}">
+    下一页 {{ icon('chevron-right') }}
+  </a>
+  {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+  {{ icon('search') }}
+  {% if query %}<p>没有匹配 “{{ query }}” 的文件。</p>
+  {% else %}<p>还没有归档任何文件。</p>{% endif %}
+  <p class="muted">
+    用 <code>uv run python run.py scan --source &lt;目录&gt;</code> 扫描目录。
+  </p>
+</div>
+{% endif %}
+{% endblock %}

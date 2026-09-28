@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block eyebrow %}<p class="eyebrow">VIEWER · #{{ f.id }}</p>{% endblock %}
+
+{% block content %}
+<article class="viewer" data-viewer>
+  <header class="viewer-head">
+    <a class="btn" href="{{ back }}">{{ icon('arrow-left') }}返回列表</a>
+    <div class="viewer-title">
+      <h2>{{ f.filename }}</h2>
+      <p class="viewer-sub">
+        {{ media_label(f.media_type) }} ·
+        {{ f.date }}{% if f.clock %} {{ f.clock }}{% endif %}
+        {% if f.folder %} · {{ f.folder }}/{% endif %}
+        {% if f.size %} · {{ size(f.size) }}{% endif %}
+      </p>
+    </div>
+    <a class="btn" href="{{ url_for('download', file_id=f.id) }}">{{ icon('download') }}下载</a>
+  </header>
+
+  <div class="stage">
+    {% if f.is_image %}
+      <img class="stage-media" src="{{ url_for('media', file_id=f.id) }}"
+           alt="{{ f.filename }}" decoding="async">
+    {% elif f.is_video %}
+      <video class="stage-media" controls preload="metadata"
+             src="{{ url_for('media', file_id=f.id) }}"></video>
+    {% elif f.is_audio %}
+      <div class="stage-audio">
+        <div class="audio-art">{{ icon('audio') }}</div>
+        <audio controls preload="metadata" src="{{ url_for('media', file_id=f.id) }}"></audio>
+      </div>
+    {% else %}
+      <p class="muted">这种类型的文件无法在浏览器中预览。</p>
+    {% endif %}
+
+    {% if prev_id %}
+    <a class="nav-arrow nav-prev" href="{{ url_for('viewer', file_id=prev_id, **nav_params) }}"
+       aria-label="上一个">{{ icon('chevron-left') }}</a>
+    {% endif %}
+    {% if next_id %}
+    <a class="nav-arrow nav-next" href="{{ url_for('viewer', file_id=next_id, **nav_params) }}"
+       aria-label="下一个">{{ icon('chevron-right') }}</a>
+    {% endif %}
+  </div>
+
+  <footer class="viewer-foot">
+    {% if prev_id %}
+    <a class="btn" href="{{ url_for('viewer', file_id=prev_id, **nav_params) }}">{{ icon('chevron-left') }}上一个</a>
+    {% else %}<span class="btn is-disabled">{{ icon('chevron-left') }}上一个</span>{% endif %}
+    {% if next_id %}
+    <a class="btn" href="{{ url_for('viewer', file_id=next_id, **nav_params) }}">下一个{{ icon('chevron-right') }}</a>
+    {% else %}<span class="btn is-disabled">下一个{{ icon('chevron-right') }}</span>{% endif %}
+  </footer>
+
+  <details class="info" data-info open>
+    <summary>{{ icon('info') }}详细信息</summary>
+    <dl>
+      <dt>文件名</dt><dd>{{ f.filename }}</dd>
+      <dt>拍摄时间</dt>
+      <dd>
+        {% if f.time_source == 'none' %}
+          <span class="tag tag-warn">{{ icon('alert') }}未找到内嵌时间</span>
+        {% else %}
+          {{ f.taken_at or '-' }}
+          <span class="tag">{{ source_label(f.time_source) }}</span>
+          <span class="tag tag-soft">{{ precision_label(f.time_precision) }}</span>
+        {% endif %}
+      </dd>
+      {% if f.resolution %}<dt>尺寸</dt><dd>{{ f.resolution }}</dd>{% endif %}
+      {% if f.duration_ms %}<dt>时长</dt><dd>{{ dur(f.duration_ms) }}</dd>{% endif %}
+      {% if f.codec %}<dt>编码</dt><dd>{{ f.codec }}</dd>{% endif %}
+      {% if f.container %}<dt>容器</dt><dd>{{ f.container }}</dd>{% endif %}
+      <dt>大小</dt><dd>{{ size(f.size) }}</dd>
+      <dt>格式</dt><dd>{{ f.ext|upper }}</dd>
+      <dt>源路径</dt><dd class="path">{{ f.source_path }}</dd>
+    </dl>
+  </details>
+</article>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Keyboard navigation for the lightbox.  The links already work without JS;
+  // this only adds the keys.
+  document.addEventListener('keydown', function (e) {
+    if (e.target.matches('input, textarea, select')) return;
+    if (e.key === 'ArrowLeft') {
+      var p = document.querySelector('.nav-prev');
+      if (p) location.href = p.href;
+    } else if (e.key === 'ArrowRight') {
+      var n = document.querySelector('.nav-next');
+      if (n) location.href = n.href;
+    } else if (e.key === 'Escape') {
+      location.href = document.querySelector('.viewer-head .btn').href;
+    } else if (e.key === 'i' || e.key === 'I') {
+      var info = document.querySelector('[data-info]');
+      if (info) info.toggleAttribute('open');
+    }
+  });
+</script>
+{% endblock %}

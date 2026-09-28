@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block eyebrow %}<p class="eyebrow">ERROR · {{ code }}</p>{% endblock %}
+
+{% block content %}
+<div class="empty-state">
+  {{ icon('alert') }}
+  <p class="error-code">{{ code }}</p>
+  <h2>{{ title }}</h2>
+  <p class="muted">{{ message }}</p>
+  <p><a class="btn btn-primary" href="{{ url_for('index') }}">{{ icon('arrow-left') }}回到首页</a></p>
+</div>
+{% endblock %}
